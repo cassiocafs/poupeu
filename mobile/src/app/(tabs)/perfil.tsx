@@ -18,11 +18,17 @@ import { Spacing } from '@/constants/theme';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePreferences, type ColorSchemeOverride } from '@/contexts/PreferencesContext';
 import { useTheme } from '@/hooks/use-theme';
+import type { OrdenacaoTransacoes } from '@/lib/ordenacaoTransacoes';
 
 const OPCOES_TEMA: { valor: ColorSchemeOverride; label: string }[] = [
   { valor: 'system', label: 'Sistema' },
   { valor: 'light', label: 'Claro' },
   { valor: 'dark', label: 'Escuro' },
+];
+
+const OPCOES_ORDENACAO: { valor: OrdenacaoTransacoes; label: string }[] = [
+  { valor: 'recentes', label: 'Recentes' },
+  { valor: 'antigas', label: 'Antigas' },
 ];
 
 function nomeDeExibicao(email: string | undefined, nomeCompleto: unknown): string {
@@ -34,7 +40,14 @@ export default function PerfilScreen() {
   const router = useRouter();
   const theme = useTheme();
   const { session, signOut } = useAuth();
-  const { colorSchemeOverride, setColorSchemeOverride, hideValues, setHideValues } = usePreferences();
+  const {
+    colorSchemeOverride,
+    setColorSchemeOverride,
+    hideValues,
+    setHideValues,
+    ordenacaoTransacoes,
+    setOrdenacaoTransacoes,
+  } = usePreferences();
   const [diagnosticoAberto, setDiagnosticoAberto] = useState(false);
   const [regrasAberto, setRegrasAberto] = useState(false);
   const podeVerDiagnostico = session?.user?.email === 'esteyceecassio@gmail.com';
@@ -104,6 +117,20 @@ export default function PerfilScreen() {
               value={colorSchemeOverride}
               onChange={setColorSchemeOverride}
             />
+
+            <ThemedView style={[styles.preferenciaLinhaComBorda, { borderTopColor: theme.border }]}>
+              <ThemedView style={styles.preferenciaTextos}>
+                <ThemedText type="label">Ordenar transações</ThemedText>
+                <ThemedText type="small" themeColor="textSecondary">
+                  Defina o que aparece no topo da lista
+                </ThemedText>
+              </ThemedView>
+              <Tabs
+                items={OPCOES_ORDENACAO.map((o) => ({ value: o.valor, label: o.label }))}
+                value={ordenacaoTransacoes}
+                onChange={setOrdenacaoTransacoes}
+              />
+            </ThemedView>
 
             <ThemedView style={[styles.preferenciaLinhaComBorda, { borderTopColor: theme.border }]}>
               <AppSwitch
@@ -247,7 +274,12 @@ const styles = StyleSheet.create({
   avatar: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
   perfilTextos: { flex: 1, gap: 2 },
   preferenciasCard: { gap: Spacing.three },
-  preferenciaLinhaComBorda: { borderTopWidth: StyleSheet.hairlineWidth, paddingTop: Spacing.two, marginTop: Spacing.one },
+  preferenciaLinhaComBorda: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    paddingTop: Spacing.two,
+    marginTop: Spacing.one,
+    gap: Spacing.three,
+  },
   preferenciaTextos: { flex: 1, gap: 2 },
   acoesCard: { overflow: 'hidden' },
   acaoLinha: {

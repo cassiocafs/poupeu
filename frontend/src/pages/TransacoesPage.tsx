@@ -5,6 +5,8 @@ import { listarTransacoesMes, type StatusFiltro } from "@/api/transacoes";
 import { listarContas } from "@/api/contas";
 import { useAccountFilter } from "@/contexts/AccountFilterContext";
 import { useCategoryFilter } from "@/contexts/CategoryFilterContext";
+import { usePreferences } from "@/contexts/PreferencesContext";
+import { ordenarDias } from "@/lib/ordenacaoTransacoes";
 import { MesNavigator } from "@/components/shared/MesNavigator";
 import { BuscaEStatusBar } from "@/components/transacoes/BuscaEStatusBar";
 import { TransacoesLista } from "@/components/transacoes/TransacoesLista";
@@ -39,6 +41,7 @@ export function TransacoesPage() {
   const { data: contas = [] } = useQuery({ queryKey: ["contas"], queryFn: () => listarContas(true) });
   const { contasSelecionadasIds } = useAccountFilter();
   const { categoriasSelecionadasIds, alternarCategoriaSelecionada } = useCategoryFilter();
+  const { ordenacaoTransacoes } = usePreferences();
   const categoriaIds =
     categoriasSelecionadasIds.length > 0 ? categoriasSelecionadasIds : undefined;
 
@@ -225,7 +228,7 @@ export function TransacoesPage() {
           <p className="text-sm text-muted-foreground">Carregando...</p>
         ) : (
           <TransacoesLista
-            dias={data?.dias ?? []}
+            dias={ordenarDias(data?.dias ?? [], ordenacaoTransacoes)}
             saldoAnterior={data?.saldoAnterior}
             headerOffset={topBarHeight}
             selectedIds={selectedIds}

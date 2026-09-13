@@ -6,6 +6,7 @@ import { listarGrupos } from "@/api/categorias";
 import { listarRegras } from "@/api/regras";
 import { Card } from "@/components/ui/Card";
 import { ThemeCard } from "@/components/configuracoes/ThemeCard";
+import { OrdenacaoTransacoesCard } from "@/components/configuracoes/OrdenacaoTransacoesCard";
 import { ExcluirContaUsuarioCard } from "@/components/configuracoes/ExcluirContaUsuarioCard";
 
 export function ConfiguracoesOverview() {
@@ -98,6 +99,7 @@ export function ConfiguracoesOverview() {
         </Card>
       ))}
       <ThemeCard />
+      <OrdenacaoTransacoesCard />
       <ExcluirContaUsuarioCard />
     </div>
   );

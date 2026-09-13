@@ -25,6 +25,8 @@ import { useFormatarValor } from '@/hooks/use-formatar-valor';
 import { formatarDiaGrupo } from '@/lib/format';
 import { useTheme } from '@/hooks/use-theme';
 import { useTransacoesComPendencias, type TransacaoComPendencia } from '@/hooks/use-transacoes-com-pendencias';
+import { usePreferences } from '@/contexts/PreferencesContext';
+import { ordenarDias } from '@/lib/ordenacaoTransacoes';
 
 const MESES = [
   'janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho',
@@ -39,6 +41,7 @@ function hoje() {
 export default function TransacoesScreen() {
   const theme = useTheme();
   const formatarValor = useFormatarValor();
+  const { ordenacaoTransacoes } = usePreferences();
   const padrao = hoje();
   const params = useLocalSearchParams<{ contaId?: string; ano?: string; mes?: string; novo?: string; tipo?: string }>();
   const contaIdParam = Array.isArray(params.contaId) ? params.contaId[0] : params.contaId;
@@ -175,7 +178,7 @@ export default function TransacoesScreen() {
     }
   }
 
-  const grupos = data?.dias ?? [];
+  const grupos = ordenarDias(data?.dias ?? [], ordenacaoTransacoes);
 
   const filtrosAtivos =
     status !== 'todas' ||
