@@ -27,7 +27,6 @@ export function SignupPage() {
   const { signUp, signInWithGoogle } = useAuth();
   const navigate = useNavigate();
   const [erro, setErro] = useState<string | null>(null);
-  const [criado, setCriado] = useState(false);
   const [mostrarSenha, setMostrarSenha] = useState(false);
   const [mostrarConfirmarSenha, setMostrarConfirmarSenha] = useState(false);
   const [entrandoComGoogle, setEntrandoComGoogle] = useState(false);
@@ -42,8 +41,8 @@ export function SignupPage() {
     setErro(null);
     try {
       await signUp(values.nome, values.email, values.password);
-      setCriado(true);
-      setTimeout(() => navigate("/"), 1500);
+      window.alert("Enviamos um link de confirmação para o seu e-mail. Confirme para poder entrar.");
+      navigate("/login");
     } catch (err) {
       setErro(err instanceof Error ? err.message : "Falha ao criar conta");
     }
@@ -149,7 +148,6 @@ export function SignupPage() {
         </div>
 
         {erro && <p className="text-sm text-destructive">{erro}</p>}
-        {criado && <p className="text-sm text-income">Conta criada! Redirecionando...</p>}
 
         <Button type="submit" disabled={isSubmitting} className="w-full">
           {isSubmitting ? "Criando..." : "Criar conta"}

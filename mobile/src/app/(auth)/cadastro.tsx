@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Feather } from '@expo/vector-icons';
 import { Link, useRouter } from 'expo-router';
-import { Image, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, TextInput } from 'react-native';
+import { Alert, Image, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
@@ -45,6 +45,9 @@ export default function CadastroScreen() {
     setLoading(true);
     try {
       await signUp(nome.trim(), email.trim(), senha);
+      Alert.alert('Confirme seu e-mail', 'Enviamos um link de confirmação para o seu e-mail. Confirme para poder entrar.', [
+        { text: 'OK', onPress: () => router.replace('/login') },
+      ]);
     } catch (err) {
       setErro(traduzirErroAuth(err, 'Falha ao criar conta'));
     } finally {
