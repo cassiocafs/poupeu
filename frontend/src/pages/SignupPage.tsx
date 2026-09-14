@@ -6,6 +6,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useAuth } from "@/contexts/AuthContext";
+import { useFavicon } from "@/hooks/use-favicon";
 import { Button } from "@/components/ui/Button";
 import { GoogleButton } from "@/components/ui/GoogleButton";
 
@@ -24,6 +25,7 @@ const schema = z
 type FormValues = z.infer<typeof schema>;
 
 export function SignupPage() {
+  useFavicon("/app-icon.png");
   const { signUp, signInWithGoogle } = useAuth();
   const navigate = useNavigate();
   const [erro, setErro] = useState<string | null>(null);
