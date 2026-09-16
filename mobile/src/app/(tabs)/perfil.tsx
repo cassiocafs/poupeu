@@ -17,6 +17,7 @@ import { Tabs } from '@/components/ui/Tabs';
 import { Spacing } from '@/constants/theme';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePreferences, type ColorSchemeOverride } from '@/contexts/PreferencesContext';
+import { useSyncQueue } from '@/hooks/use-sync-queue';
 import { useTheme } from '@/hooks/use-theme';
 import type { OrdenacaoTransacoes } from '@/lib/ordenacaoTransacoes';
 
@@ -51,6 +52,24 @@ export default function PerfilScreen() {
   const [diagnosticoAberto, setDiagnosticoAberto] = useState(false);
   const [regrasAberto, setRegrasAberto] = useState(false);
   const podeVerDiagnostico = session?.user?.email === 'esteyceecassio@gmail.com';
+  const { fila: filaSincronizacao } = useSyncQueue();
+
+  function confirmarSaida() {
+    if (filaSincronizacao.length === 0) {
+      signOut();
+      return;
+    }
+    Alert.alert(
+      'Alterações não sincronizadas',
+      filaSincronizacao.length === 1
+        ? 'Você tem 1 alteração feita offline que ainda não foi enviada. Ela será sincronizada quando você entrar de novo nesta conta. Sair mesmo assim?'
+        : `Você tem ${filaSincronizacao.length} alterações feitas offline que ainda não foram enviadas. Elas serão sincronizadas quando você entrar de novo nesta conta. Sair mesmo assim?`,
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        { text: 'Sair mesmo assim', style: 'destructive', onPress: () => signOut() },
+      ],
+    );
+  }
 
   const excluirContaMutation = useMutation({
     mutationFn: excluirContaUsuario,
@@ -244,7 +263,7 @@ export default function PerfilScreen() {
               )}
             </Pressable>
 
-            <Pressable onPress={() => signOut()} style={styles.acaoLinha}>
+            <Pressable onPress={confirmarSaida} style={styles.acaoLinha}>
               <ThemedView style={[styles.acaoIcone, { backgroundColor: theme.destructiveSoft }]}>
                 <Feather name="log-out" size={16} color={theme.destructive} />
               </ThemedView>

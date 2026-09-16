@@ -37,6 +37,7 @@ jest.mock('@/lib/queryClient', () => ({
 import {
   _resetParaTeste,
   atualizarTransferenciaPendente,
+  definirUsuarioAtual,
   enqueueCriarTransacao,
   enqueueCriarTransferencia,
   enqueueEditarTransacao,
@@ -208,5 +209,51 @@ describe('syncQueue — processarFila', () => {
 
     expect(criarTransacaoMock).not.toHaveBeenCalled();
     expect(excluirTransacaoMock).not.toHaveBeenCalled();
+  });
+});
+
+describe('syncQueue — isolamento entre contas no mesmo aparelho', () => {
+  it('itens enfileirados por um usuário não aparecem para outro que logue em seguida', () => {
+    definirUsuarioAtual('usuario-a');
+    enqueueCriarTransacao(PAYLOAD_TRANSACAO);
+    expect(getEstado().fila).toHaveLength(1);
+
+    definirUsuarioAtual('usuario-b');
+    expect(getEstado().fila).toHaveLength(0);
+
+    definirUsuarioAtual('usuario-a');
+    expect(getEstado().fila).toHaveLength(1);
+  });
+
+  it('processarFila só sincroniza as operações do usuário logado, deixando as de outra conta paradas', async () => {
+    criarTransacaoMock.mockResolvedValue({ id: 'x' });
+
+    definirUsuarioAtual('usuario-a');
+    enqueueCriarTransacao(PAYLOAD_TRANSACAO);
+
+    definirUsuarioAtual('usuario-b');
+    enqueueCriarTransacao({ ...PAYLOAD_TRANSACAO, descricao: 'Do usuário B' });
+
+    await processarFila();
+
+    expect(criarTransacaoMock).toHaveBeenCalledTimes(1);
+    expect(criarTransacaoMock).toHaveBeenCalledWith(expect.objectContaining({ descricao: 'Do usuário B' }));
+    expect(getEstado().fila).toHaveLength(0);
+
+    definirUsuarioAtual('usuario-a');
+    expect(getEstado().fila).toHaveLength(1);
+  });
+
+  it('itens gravados antes desta versão (sem usuarioId) são adotados pelo primeiro usuário que logar', () => {
+    enqueueCriarTransacao(PAYLOAD_TRANSACAO);
+    const [itemLegado] = getEstado().fila;
+    // Simula uma instalação anterior à mudança: o campo usuarioId nunca existiu.
+    delete (itemLegado as { usuarioId?: string | null }).usuarioId;
+
+    definirUsuarioAtual('usuario-a');
+    expect(getEstado().fila).toHaveLength(1);
+
+    definirUsuarioAtual('usuario-b');
+    expect(getEstado().fila).toHaveLength(0);
   });
 });

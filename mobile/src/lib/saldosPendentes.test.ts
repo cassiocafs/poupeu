@@ -25,6 +25,7 @@ describe('saldosPendentes', () => {
       {
         tipo: 'criarTransacao' as const,
         id: 't1',
+        usuarioId: 'usuario-teste',
         criadoEm: '2026-09-04T12:00:00.000Z',
         tentativas: 0,
         payload: { tipo: 'DESPESA' as const, data: '2026-09-04', descricao: 'Mercado', contaId: 'a', valor: 30, consolidado: true },
@@ -40,6 +41,7 @@ describe('saldosPendentes', () => {
       {
         tipo: 'criarTransferencia' as const,
         grupoId: 'g1',
+        usuarioId: 'usuario-teste',
         criadoEm: '2026-09-04T12:00:00.000Z',
         tentativas: 0,
         payload: { data: '2026-09-04', contaOrigemId: 'a', contaDestinoId: 'b', valor: 40, consolidado: true },

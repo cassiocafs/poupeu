@@ -1,9 +1,10 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabaseClient";
 import { signInWithGoogleIdentity } from "@/lib/googleIdentity";
 import { apiFetch } from "@/api/client";
+import { queryClient } from "@/lib/queryClient";
 
 interface AuthContextValue {
   session: Session | null;
@@ -19,15 +20,22 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const userIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
+      userIdRef.current = data.session?.user.id ?? null;
       setSession(data.session);
       setLoading(false);
     });
 
     const { data: subscription } = supabase.auth.onAuthStateChange(
       (_event, newSession) => {
+        const newUserId = newSession?.user.id ?? null;
+        if (newUserId !== userIdRef.current) {
+          queryClient.clear();
+        }
+        userIdRef.current = newUserId;
         setSession(newSession);
       },
     );
