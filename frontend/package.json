@@ -23,7 +23,7 @@
     "react-hook-form": "^7.83.0",
     "react-router": "^8.3.0",
     "recharts": "^3.10.1",
-    "zod": "^4.4.3"
+    "zod": "^4.6.6"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.3",
@@ -38,7 +38,7 @@
     "oxlint": "^1.71.0",
     "tailwindcss": "^4.3.3",
     "typescript": "~6.0.2",
-    "vite": "^8.1.1",
+    "vite": "^8.3.3",
     "vitest": "^4.1.10"
   }
 }
