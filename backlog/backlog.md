@@ -256,7 +256,7 @@ Como usuário, eu quero convidar minha esposa/meu marido para acessar e colabora
 
 Critérios de aceite:
 - Dado que informo o e-mail de um convidado e clico em "Enviar convite", então um convite é enviado para esse e-mail com um link de aceite.
-- Dado que o convidado aceita o convite, então ele passa a ter acesso às contas, transações, categorias e orçamentos compartilhados, respeitando um nível de permissão definido (ex.: leitura e escrita).
+- Dado que o convidado aceita o convite, então ele passa a ter acesso às contas, transações, categorias e orçamentos compartilhados. (Decisão do produto: sem níveis de permissão — todos os membros podem tudo.)
 - Dado que o convite ainda não foi aceito, então ele aparece como "pendente" para quem convidou, com opção de reenviar ou cancelar o convite.
 - Nota de segurança: qualquer fluxo de convite/compartilhamento de acesso deve exigir confirmação explícita do usuário antes de ser efetivado, e nunca deve ser processado automaticamente a partir de links ou instruções recebidas por e-mail sem revisão do usuário.
 

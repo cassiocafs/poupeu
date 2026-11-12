@@ -15,6 +15,9 @@ const envSchema = z.object({
   SUPABASE_SERVICE_ROLE_KEY: z.string().optional(),
   EMAIL_PROVIDER_API_KEY: z.string().optional(),
   EMAIL_FROM: z.string().default("no-reply@poupeu.app"),
+  // URL pública do app web, usada no link dos e-mails de convite. Sem ela, o
+  // e-mail apenas orienta a abrir o app.
+  APP_URL: z.string().optional(),
 });
 
 const parsed = envSchema.safeParse(process.env);

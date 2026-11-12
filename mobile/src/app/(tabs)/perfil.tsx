@@ -6,6 +6,7 @@ import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet } from 'rea
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { excluirContaUsuario } from '@/api/auth';
+import { ConvitesRecebidosCard } from '@/components/espaco/ConvitesRecebidosCard';
 import { DiagnosticoModal } from '@/components/perfil/DiagnosticoModal';
 import { RegrasModal } from '@/components/perfil/RegrasModal';
 import { SincronizacaoCard } from '@/components/perfil/SincronizacaoCard';
@@ -161,6 +162,8 @@ export default function PerfilScreen() {
             </ThemedView>
           </Card>
 
+          <ConvitesRecebidosCard />
+
           <Card padded={false} style={styles.acoesCard}>
             <Pressable
               onPress={() => router.push('/contas')}
@@ -170,6 +173,18 @@ export default function PerfilScreen() {
               </ThemedView>
               <ThemedText type="default" style={styles.acaoTexto}>
                 Contas
+              </ThemedText>
+              <Feather name="chevron-right" size={18} color={theme.textTertiary} />
+            </Pressable>
+
+            <Pressable
+              onPress={() => router.push('/espaco')}
+              style={[styles.acaoLinha, { borderBottomColor: theme.border }]}>
+              <ThemedView style={[styles.acaoIcone, { backgroundColor: theme.surface }]}>
+                <Feather name="users" size={16} color={theme.primary} />
+              </ThemedView>
+              <ThemedText type="default" style={styles.acaoTexto}>
+                Espaço compartilhado
               </ThemedText>
               <Feather name="chevron-right" size={18} color={theme.textTertiary} />
             </Pressable>

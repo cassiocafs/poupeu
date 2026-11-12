@@ -1,9 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router";
-import { Wallet, Tag, SlidersHorizontal, Upload, ShieldCheck, FileText } from "lucide-react";
+import { Wallet, Tag, SlidersHorizontal, Upload, ShieldCheck, FileText, Users } from "lucide-react";
 import { listarContas } from "@/api/contas";
 import { listarGrupos } from "@/api/categorias";
 import { listarRegras } from "@/api/regras";
+import { obterEspaco } from "@/api/espaco";
 import { Card } from "@/components/ui/Card";
 import { ThemeCard } from "@/components/configuracoes/ThemeCard";
 import { OrdenacaoTransacoesCard } from "@/components/configuracoes/OrdenacaoTransacoesCard";
@@ -16,6 +17,7 @@ export function ConfiguracoesOverview() {
   });
   const { data: grupos } = useQuery({ queryKey: ["categorias", "grupos"], queryFn: listarGrupos });
   const { data: regras } = useQuery({ queryKey: ["regras"], queryFn: listarRegras });
+  const { data: espaco } = useQuery({ queryKey: ["espaco"], queryFn: obterEspaco });
 
   const totalCategorias = grupos
     ? grupos.grupos.reduce(
@@ -26,6 +28,16 @@ export function ConfiguracoesOverview() {
     : 0;
 
   const cards = [
+    {
+      to: "espaco",
+      titulo: "Espaço compartilhado",
+      meta: espaco
+        ? `${espaco.membros.length} ${espaco.membros.length === 1 ? "membro" : "membros"}`
+        : "—",
+      desc: "Convide familiares pelo e-mail para acessar este espaço e registrar transações também.",
+      acao: "Convidar familiares",
+      Icon: Users,
+    },
     {
       to: "contas",
       titulo: "Contas",

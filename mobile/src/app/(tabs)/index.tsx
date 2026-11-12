@@ -7,6 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { buscarResumoMensal } from '@/api/transacoes';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { ConvitesRecebidosCard } from '@/components/espaco/ConvitesRecebidosCard';
 import { FinancialCard } from '@/components/home/FinancialCard';
 import { MetasResumoCard } from '@/components/home/MetasResumoCard';
 import { SaldoPorContasCard } from '@/components/home/SaldoPorContasCard';
@@ -75,6 +76,8 @@ export default function InicioScreen() {
             greeting={nome ? `Oi, ${nome} 👋` : 'Oi 👋'}
             subtitle={`Vamos olhar ${mesNome}?`}
           />
+
+          <ConvitesRecebidosCard />
 
           {isLoading || !resumo ? (
             <ThemedText type="small" themeColor="textSecondary">

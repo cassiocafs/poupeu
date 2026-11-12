@@ -42,6 +42,9 @@ const ImportarExtratoSection = lazy(() =>
     default: m.ImportarExtratoSection,
   })),
 );
+const EspacoSection = lazy(() =>
+  import("@/components/configuracoes/EspacoSection").then((m) => ({ default: m.EspacoSection })),
+);
 const ConfiguracoesOverview = lazy(() =>
   import("@/components/configuracoes/ConfiguracoesOverview").then((m) => ({
     default: m.ConfiguracoesOverview,
@@ -77,6 +80,7 @@ function App() {
             <Route path="categorias" element={<CategoriasSection />} />
             <Route path="regras" element={<RegrasSection />} />
             <Route path="importacao" element={<ImportarExtratoSection />} />
+            <Route path="espaco" element={<EspacoSection />} />
           </Route>
         </Route>
       </Routes>

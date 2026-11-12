@@ -21,6 +21,11 @@ declare global {
 const TTL_CACHE_MS = 60_000;
 const cacheEspacoPorUsuario = new Map<string, { espacoId: string; expiraEm: number }>();
 
+/** Descarta o espaço em cache do usuário (ex.: ao aceitar convite ou sair de um espaço). */
+export function invalidarCacheEspaco(userId: string) {
+  cacheEspacoPorUsuario.delete(userId);
+}
+
 export const resolveEspaco = asyncHandler(async function resolveEspaco(
   req: Request,
   _res: Response,
