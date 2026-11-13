@@ -9,6 +9,8 @@ import { PeriodoSelector } from "@/components/relatorios/PeriodoSelector";
 import { RelatorioTotais } from "@/components/relatorios/RelatorioTotais";
 import { ReceitaDespesaChart } from "@/components/relatorios/ReceitaDespesaChart";
 import { TabelaHierarquicaCategorias } from "@/components/relatorios/TabelaHierarquicaCategorias";
+import { LinhasCategoriaChart } from "@/components/relatorios/LinhasCategoriaChart";
+import { TabelaPivotCategorias } from "@/components/relatorios/TabelaPivotCategorias";
 import { ExportarCsvButton } from "@/components/relatorios/ExportarCsvButton";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { Card } from "@/components/ui/Card";
@@ -55,6 +57,12 @@ export function RelatoriosPage() {
     navigate(`/transacoes?${params.toString()}`);
   }
 
+  function focarMes(ano: number, mes: number) {
+    mudarPeriodo({ ano, mes }, { ano, mes });
+  }
+
+  const focoEmUmMes = totalMeses === 1;
+
   const { data, isLoading, isError } = useQuery({
     queryKey: [
       "transacoes",
@@ -86,6 +94,18 @@ export function RelatoriosPage() {
           <p className="mt-1 text-sm text-muted-foreground">
             Receita e despesa de {periodoLabel}
             {contaIds ? ` · ${contaIds.length} conta${contaIds.length > 1 ? "s" : ""}` : ""}
+            {focoEmUmMes && (
+              <>
+                {" · "}
+                <button
+                  type="button"
+                  onClick={() => mudarPeriodo(periodoPadrao().inicio, periodoPadrao().fim)}
+                  className="font-semibold text-primary hover:underline"
+                >
+                  Limpar foco no mês
+                </button>
+              </>
+            )}
           </p>
         </div>
         {data && temDados && <ExportarCsvButton data={data} inicio={inicio} fim={fim} />}
@@ -111,7 +131,33 @@ export function RelatoriosPage() {
         <>
           <RelatorioTotais totais={data.totais} meses={totalMeses} />
 
-          <ReceitaDespesaChart meses={data.meses} />
+          <ReceitaDespesaChart meses={data.meses} onSelecionarMes={focarMes} />
+
+          <section className="space-y-4">
+            <h2 className="font-display text-lg font-bold text-foreground">Evolução por categoria</h2>
+            <div className="grid items-start gap-6 lg:grid-cols-2">
+              <Card className="p-5">
+                <LinhasCategoriaChart dados={data.despesasPorCategoriaPorMes} meses={data.meses} tipo="DESPESA" />
+              </Card>
+              <Card className="p-5">
+                <LinhasCategoriaChart dados={data.receitasPorCategoriaPorMes} meses={data.meses} tipo="RECEITA" />
+              </Card>
+            </div>
+          </section>
+
+          <section className="space-y-4">
+            <h2 className="font-display text-lg font-bold text-foreground">Tabela por categoria e mês</h2>
+            <Card className="space-y-6 p-5">
+              <div>
+                <h3 className="mb-2 font-display text-sm font-semibold text-foreground">Despesas</h3>
+                <TabelaPivotCategorias dados={data.despesasPorCategoriaPorMes} meses={data.meses} tipo="DESPESA" />
+              </div>
+              <div>
+                <h3 className="mb-2 font-display text-sm font-semibold text-foreground">Receitas</h3>
+                <TabelaPivotCategorias dados={data.receitasPorCategoriaPorMes} meses={data.meses} tipo="RECEITA" />
+              </div>
+            </Card>
+          </section>
 
           <section className="space-y-4">
             <h2 className="font-display text-lg font-bold text-foreground">Despesas</h2>

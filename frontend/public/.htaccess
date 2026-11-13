@@ -1,0 +1,17 @@
+# SPA (React Router): qualquer rota que não seja um arquivo/pasta existente
+# deve cair no index.html, para o roteador do React decidir o que mostrar.
+# Sem isso, dar refresh ou voltar para uma rota como /transacoes faz o Apache
+# procurar um arquivo "transacoes" que não existe e devolver 404.
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /
+
+  RewriteCond %{REQUEST_FILENAME} -f [OR]
+  RewriteCond %{REQUEST_FILENAME} -d
+  RewriteRule ^ - [L]
+
+  RewriteRule ^ index.html [L]
+</IfModule>
+
+# Fallback para quando mod_rewrite não está disponível.
+ErrorDocument 404 /index.html

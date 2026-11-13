@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router";
 import { useQuery } from "@tanstack/react-query";
 import { listarTransacoesMes, type StatusFiltro } from "@/api/transacoes";
@@ -108,6 +108,16 @@ export function TransacoesPage() {
     setSelectedIds((prev) => (prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]));
   }
 
+  const todosIds = useMemo(
+    () => (data?.dias ?? []).flatMap((dia) => dia.transacoes.map((t) => t.id)),
+    [data],
+  );
+  const todasSelecionadas = todosIds.length > 0 && todosIds.every((id) => selectedIds.includes(id));
+
+  function alternarSelecionarTodas() {
+    setSelectedIds(todasSelecionadas ? [] : todosIds);
+  }
+
   function mostrarMensagemSucesso(mensagem: string) {
     if (mensagemTimeoutRef.current) clearTimeout(mensagemTimeoutRef.current);
     setMensagemSucesso(mensagem);
@@ -163,19 +173,33 @@ export function TransacoesPage() {
             </>
           }
           acoesLote={
-            selectedIds.length > 0 ? (
-              <AcoesLoteBar
-                selectedIds={selectedIds}
-                onDone={() => setSelectedIds([])}
-                onExcluindoChange={setExcluindo}
-                onExcluida={(quantidade) =>
-                  mostrarMensagemSucesso(
-                    quantidade === 1
-                      ? "Transação excluída com sucesso"
-                      : `${quantidade} transações excluídas com sucesso`,
-                  )
-                }
-              />
+            todosIds.length > 0 ? (
+              <div className="flex flex-wrap items-center gap-3">
+                <label className="flex items-center gap-2 text-sm font-medium text-foreground/80">
+                  <input
+                    type="checkbox"
+                    checked={todasSelecionadas}
+                    onChange={alternarSelecionarTodas}
+                    disabled={excluindo}
+                    className="accent-primary disabled:cursor-not-allowed disabled:opacity-50"
+                  />
+                  Selecionar todas
+                </label>
+                {selectedIds.length > 0 && (
+                  <AcoesLoteBar
+                    selectedIds={selectedIds}
+                    onDone={() => setSelectedIds([])}
+                    onExcluindoChange={setExcluindo}
+                    onExcluida={(quantidade) =>
+                      mostrarMensagemSucesso(
+                        quantidade === 1
+                          ? "Transação excluída com sucesso"
+                          : `${quantidade} transações excluídas com sucesso`,
+                      )
+                    }
+                  />
+                )}
+              </div>
             ) : undefined
           }
         />

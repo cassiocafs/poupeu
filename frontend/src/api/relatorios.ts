@@ -9,12 +9,24 @@ export interface RelatorioMes {
   resultado: number;
 }
 
+export interface ItemCategoriaPorMesResumo {
+  categoriaId: string | null;
+  categoriaNome: string;
+  grupoId: string | null;
+  grupoNome: string | null;
+  subgrupoId: string | null;
+  subgrupoNome: string | null;
+  porMes: number[];
+}
+
 export interface RelatorioResponse {
   periodo: { inicio: PeriodoMes; fim: PeriodoMes };
   meses: RelatorioMes[];
   totais: { receitas: number; despesas: number; resultado: number };
   despesasPorCategoria: ItemCategoriaResumo[];
   receitasPorCategoria: ItemCategoriaResumo[];
+  despesasPorCategoriaPorMes: ItemCategoriaPorMesResumo[];
+  receitasPorCategoriaPorMes: ItemCategoriaPorMesResumo[];
 }
 
 export function buscarRelatorio(

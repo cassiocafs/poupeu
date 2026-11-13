@@ -296,6 +296,7 @@ describe("transacoes.service — buscarRelatorio", () => {
     mockPrisma.conta.findMany.mockResolvedValue([{ id: "conta-1", saldoInicial: 0 }]);
 
     // (1) groupBy por ["categoriaId", "tipo"]  (2) groupBy por ["data", "tipo"]
+    // (3) groupBy por ["categoriaId", "tipo", "data"]
     mockPrisma.transacao.groupBy
       .mockResolvedValueOnce([
         { categoriaId: "cat-mercado", tipo: "DESPESA", _sum: { valor: -300 } },
@@ -307,6 +308,38 @@ describe("transacoes.service — buscarRelatorio", () => {
         { data: new Date("2026-05-10T00:00:00.000Z"), tipo: "DESPESA", _sum: { valor: -200 } },
         { data: new Date("2026-05-15T00:00:00.000Z"), tipo: "RECEITA", _sum: { valor: 5000 } },
         { data: new Date("2026-06-02T00:00:00.000Z"), tipo: "DESPESA", _sum: { valor: -150 } },
+      ])
+      .mockResolvedValueOnce([
+        {
+          categoriaId: "cat-mercado",
+          tipo: "DESPESA",
+          data: new Date("2026-05-10T00:00:00.000Z"),
+          _sum: { valor: -200 },
+        },
+        {
+          categoriaId: "cat-mercado",
+          tipo: "DESPESA",
+          data: new Date("2026-06-02T00:00:00.000Z"),
+          _sum: { valor: -100 },
+        },
+        {
+          categoriaId: null,
+          tipo: "DESPESA",
+          data: new Date("2026-05-20T00:00:00.000Z"),
+          _sum: { valor: -50 },
+        },
+        {
+          categoriaId: "cat-salario",
+          tipo: "RECEITA",
+          data: new Date("2026-05-15T00:00:00.000Z"),
+          _sum: { valor: 5000 },
+        },
+        {
+          categoriaId: "cat-transf",
+          tipo: "DESPESA",
+          data: new Date("2026-06-02T00:00:00.000Z"),
+          _sum: { valor: -50 },
+        },
       ]);
 
     mockPrisma.categoria.findMany.mockResolvedValue([
@@ -355,6 +388,15 @@ describe("transacoes.service — buscarRelatorio", () => {
     ]);
     expect(resultado.receitasPorCategoria).toEqual([
       expect.objectContaining({ categoriaId: "cat-salario", total: 5000 }),
+    ]);
+
+    // Mesma árvore, mas bucketizada por mês (mai/jun) — "Transferência" continua de fora.
+    expect(resultado.despesasPorCategoriaPorMes).toEqual([
+      expect.objectContaining({ categoriaId: "cat-mercado", porMes: [200, 100] }),
+      expect.objectContaining({ categoriaId: null, porMes: [50, 0] }),
+    ]);
+    expect(resultado.receitasPorCategoriaPorMes).toEqual([
+      expect.objectContaining({ categoriaId: "cat-salario", porMes: [5000, 0] }),
     ]);
   });
 });

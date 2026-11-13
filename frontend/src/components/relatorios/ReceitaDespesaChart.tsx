@@ -10,6 +10,8 @@ const COR_SAIDAS = "#E59D98";
 
 interface ReceitaDespesaChartProps {
   meses: RelatorioMes[];
+  /** Quando informado, clicar numa barra filtra o período do relatório para aquele mês. */
+  onSelecionarMes?: (ano: number, mes: number) => void;
 }
 
 function formatarCompacta(valor: number) {
@@ -21,15 +23,24 @@ function formatarCompacta(valor: number) {
   });
 }
 
-export function ReceitaDespesaChart({ meses }: ReceitaDespesaChartProps) {
+export function ReceitaDespesaChart({ meses, onSelecionarMes }: ReceitaDespesaChartProps) {
   const formatarValor = useFormatarValor();
   const { hideValues } = usePreferences();
 
   const serie = meses.map((m) => ({
     label: `${mesAbrev(m.mes)}/${String(m.ano).slice(2)}`,
+    ano: m.ano,
+    mes: m.mes,
     receitas: m.receitas,
     despesas: m.despesas,
   }));
+
+  function aoClicarBarra(data: unknown) {
+    if (!onSelecionarMes) return;
+    const bruto = data as { payload?: { ano?: number; mes?: number }; ano?: number; mes?: number };
+    const ponto = bruto?.payload ?? bruto;
+    if (ponto?.ano && ponto?.mes) onSelecionarMes(ponto.ano, ponto.mes);
+  }
 
   const corEntradas = "var(--color-chart-2)";
   const corGrid = "var(--color-border)";
@@ -40,6 +51,7 @@ export function ReceitaDespesaChart({ meses }: ReceitaDespesaChartProps) {
       <h3 className="font-display text-sm font-semibold text-foreground">Receita e despesa por mês</h3>
       <p className="mt-0.5 text-xs text-muted-foreground">
         Barras lado a lado — o que entrou e o que saiu em cada mês do período
+        {onSelecionarMes && " · clique num mês para focar só nele"}
       </p>
 
       {serie.length === 0 ? (
@@ -68,8 +80,22 @@ export function ReceitaDespesaChart({ meses }: ReceitaDespesaChartProps) {
                 }
                 contentStyle={{ fontSize: 12 }}
               />
-              <Bar dataKey="receitas" name="Entrou" fill={corEntradas} radius={[6, 6, 2, 2]} />
-              <Bar dataKey="despesas" name="Saiu" fill={COR_SAIDAS} radius={[6, 6, 2, 2]} />
+              <Bar
+                dataKey="receitas"
+                name="Entrou"
+                fill={corEntradas}
+                radius={[6, 6, 2, 2]}
+                onClick={aoClicarBarra}
+                cursor={onSelecionarMes ? "pointer" : undefined}
+              />
+              <Bar
+                dataKey="despesas"
+                name="Saiu"
+                fill={COR_SAIDAS}
+                radius={[6, 6, 2, 2]}
+                onClick={aoClicarBarra}
+                cursor={onSelecionarMes ? "pointer" : undefined}
+              />
             </BarChart>
           </ResponsiveContainer>
 

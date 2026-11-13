@@ -976,6 +976,16 @@ export interface RelatorioMes {
   resultado: number;
 }
 
+export interface ItemCategoriaPorMesResumo {
+  categoriaId: string | null;
+  categoriaNome: string;
+  grupoId: string | null;
+  grupoNome: string | null;
+  subgrupoId: string | null;
+  subgrupoNome: string | null;
+  porMes: number[];
+}
+
 export interface RelatorioResponse {
   periodo: {
     inicio: { ano: number; mes: number };
@@ -985,6 +995,8 @@ export interface RelatorioResponse {
   totais: { receitas: number; despesas: number; resultado: number };
   despesasPorCategoria: ItemCategoriaResumo[];
   receitasPorCategoria: ItemCategoriaResumo[];
+  despesasPorCategoriaPorMes: ItemCategoriaPorMesResumo[];
+  receitasPorCategoriaPorMes: ItemCategoriaPorMesResumo[];
 }
 
 export async function buscarRelatorio(
@@ -1021,7 +1033,9 @@ async function buscarRelatorioImpl(
 
   // (1) Árvore de categorias — agregado do intervalo inteiro, no Postgres.
   // (2) Série mensal — soma por dia e tipo, bucketizada em meses no JS.
-  const [porCategoria, porDia] = await Promise.all([
+  // (3) Árvore de categorias por dia — mesma ideia de (1), mas bucketizada em meses,
+  //     para alimentar o gráfico de linhas e a tabela pivot por categoria/mês.
+  const [porCategoria, porDia, porCategoriaPorDia] = await Promise.all([
     prisma.transacao.groupBy({
       by: ["categoriaId", "tipo"],
       where: {
@@ -1033,6 +1047,14 @@ async function buscarRelatorioImpl(
     prisma.transacao.groupBy({
       by: ["data", "tipo"],
       where: { ...whereBase, tipo: { in: ["DESPESA", "RECEITA"] } },
+      _sum: { valor: true },
+    }),
+    prisma.transacao.groupBy({
+      by: ["categoriaId", "tipo", "data"],
+      where: {
+        ...whereBase,
+        tipo: opts?.tipo ? opts.tipo : { in: ["DESPESA", "RECEITA"] },
+      },
       _sum: { valor: true },
     }),
   ]);
@@ -1090,6 +1112,40 @@ async function buscarRelatorioImpl(
     }
   }
 
+  const indiceMes = new Map<string, number>();
+  sequencia.forEach((s, i) => indiceMes.set(`${s.ano}-${s.mes}`, i));
+
+  const despesasPorMesMap = new Map<string, ItemCategoriaPorMesResumo>();
+  const receitasPorMesMap = new Map<string, ItemCategoriaPorMesResumo>();
+
+  for (const linha of porCategoriaPorDia) {
+    const valorAbs = Math.abs(toNumber(linha._sum.valor));
+    if (valorAbs === 0) continue;
+
+    const cat = linha.categoriaId ? categoriaPorId.get(linha.categoriaId) : undefined;
+    if (cat?.nome === NOME_CATEGORIA_TRANSFERENCIA) continue;
+
+    const idx = indiceMes.get(`${linha.data.getUTCFullYear()}-${linha.data.getUTCMonth() + 1}`);
+    if (idx === undefined) continue;
+
+    const mapa = linha.tipo === "DESPESA" ? despesasPorMesMap : receitasPorMesMap;
+    const chaveCat = linha.categoriaId ?? "sem-categoria";
+    let atual = mapa.get(chaveCat);
+    if (!atual) {
+      atual = {
+        categoriaId: linha.categoriaId,
+        categoriaNome: cat?.nome ?? "Sem Categoria",
+        grupoId: cat?.grupoId ?? null,
+        grupoNome: cat?.grupo?.nome ?? null,
+        subgrupoId: cat?.subgrupoId ?? null,
+        subgrupoNome: cat?.subgrupo?.nome ?? null,
+        porMes: new Array(sequencia.length).fill(0),
+      };
+      mapa.set(chaveCat, atual);
+    }
+    atual.porMes[idx] += valorAbs;
+  }
+
   const chave = (ano: number, mes: number) => `${ano}-${mes}`;
   const baldes = new Map<string, RelatorioMes>();
   for (const { ano, mes } of sequencia) {
@@ -1127,6 +1183,10 @@ async function buscarRelatorioImpl(
     totais,
     despesasPorCategoria: opts?.tipo === "RECEITA" ? [] : Array.from(despesasMap.values()),
     receitasPorCategoria: opts?.tipo === "DESPESA" ? [] : Array.from(receitasMap.values()),
+    despesasPorCategoriaPorMes:
+      opts?.tipo === "RECEITA" ? [] : Array.from(despesasPorMesMap.values()),
+    receitasPorCategoriaPorMes:
+      opts?.tipo === "DESPESA" ? [] : Array.from(receitasPorMesMap.values()),
   };
 }
 

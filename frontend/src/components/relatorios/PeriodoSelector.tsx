@@ -11,6 +11,7 @@ interface PeriodoSelectorProps {
 }
 
 const PRESETS: { rotulo: string; intervalo: () => { inicio: PeriodoMes; fim: PeriodoMes } }[] = [
+  { rotulo: "Mês atual", intervalo: () => ({ inicio: hojePeriodo(), fim: hojePeriodo() }) },
   { rotulo: "3 meses", intervalo: () => ({ inicio: subtrairMeses(hojePeriodo(), 2), fim: hojePeriodo() }) },
   { rotulo: "6 meses", intervalo: () => ({ inicio: subtrairMeses(hojePeriodo(), 5), fim: hojePeriodo() }) },
   { rotulo: "12 meses", intervalo: () => ({ inicio: subtrairMeses(hojePeriodo(), 11), fim: hojePeriodo() }) },
