@@ -1,9 +1,11 @@
 import { prisma } from "../../lib/prisma.js";
 import { HttpError } from "../../middlewares/errorHandler.js";
-import { diasNoMes, primeiroDiaMesUTC, ultimoDiaMesUTC } from "../../lib/datas.js";
+import { diasNoMes, hojeUTC, primeiroDiaMesUTC, ultimoDiaMesUTC } from "../../lib/datas.js";
 import { toNumber } from "../../lib/decimal.js";
 import { comTempo } from "../../lib/timing.js";
 import type { DefinirPrevistoInput } from "./orcamento.schemas.js";
+
+const MESES_JANELA_MEDIA = 12;
 
 async function buscarOrcamentoOuFalhar(espacoId: string, id: string) {
   const orcamento = await prisma.orcamentoAnual.findFirst({ where: { id, espacoId } });
@@ -24,6 +26,39 @@ export async function criarOrcamento(espacoId: string, ano: number) {
   if (existente) throw new HttpError(409, "Já existe um orçamento para este ano");
 
   return prisma.orcamentoAnual.create({ data: { espacoId, ano } });
+}
+
+export interface MediaCategoria {
+  categoriaId: string;
+  media: number;
+}
+
+/** Média mensal de despesa por categoria nos últimos 12 meses, usada para sugerir valores ao criar um orçamento. */
+export async function buscarMediasPorCategoria(espacoId: string): Promise<MediaCategoria[]> {
+  const hoje = hojeUTC();
+  const inicioJanela = new Date(
+    Date.UTC(hoje.getUTCFullYear(), hoje.getUTCMonth() - (MESES_JANELA_MEDIA - 1), 1),
+  );
+  const inicio = primeiroDiaMesUTC(inicioJanela.getUTCFullYear(), inicioJanela.getUTCMonth() + 1);
+  const fim = ultimoDiaMesUTC(hoje.getUTCFullYear(), hoje.getUTCMonth() + 1);
+
+  const somaPorCategoria = await prisma.transacao.groupBy({
+    by: ["categoriaId"],
+    where: {
+      espacoId,
+      tipo: "DESPESA",
+      categoriaId: { not: null },
+      data: { gte: inicio, lte: fim },
+    },
+    _sum: { valor: true },
+  });
+
+  return somaPorCategoria
+    .filter((s) => s.categoriaId !== null)
+    .map((s) => ({
+      categoriaId: s.categoriaId as string,
+      media: Math.abs(toNumber(s._sum.valor)) / MESES_JANELA_MEDIA,
+    }));
 }
 
 export async function excluirOrcamento(espacoId: string, id: string): Promise<void> {

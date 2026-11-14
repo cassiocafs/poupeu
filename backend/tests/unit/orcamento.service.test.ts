@@ -90,6 +90,20 @@ describe("orcamento.service", () => {
     expect(linha.realizado).toBe(80);
   });
 
+  it("buscarMediasPorCategoria divide o total dos últimos 12 meses por 12", async () => {
+    mockPrisma.transacao.groupBy.mockResolvedValue([
+      { categoriaId: "categoria-1", _sum: { valor: -1200 } },
+      { categoriaId: "categoria-2", _sum: { valor: -600 } },
+    ]);
+
+    const medias = await orcamentoService.buscarMediasPorCategoria(ESPACO_ID);
+
+    expect(medias).toEqual([
+      { categoriaId: "categoria-1", media: 100 },
+      { categoriaId: "categoria-2", media: 50 },
+    ]);
+  });
+
   it("buscarGrade não deixa receita e despesa na mesma categoria se cancelarem", async () => {
     mockPrisma.orcamentoAnual.findFirst.mockResolvedValue({ id: "orc-1", ano: 2026 });
     mockPrisma.orcamentoCategoriaMes.findMany.mockResolvedValue([

@@ -32,6 +32,14 @@ orcamentoRouter.get(
   }),
 );
 
+orcamentoRouter.get(
+  "/medias",
+  asyncHandler(async (req, res) => {
+    const medias = await orcamentoService.buscarMediasPorCategoria(req.espacoId!);
+    res.json(medias);
+  }),
+);
+
 orcamentoRouter.post(
   "/",
   asyncHandler(async (req, res) => {

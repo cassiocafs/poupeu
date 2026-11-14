@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { listarGrupos } from "@/api/categorias";
-import { criarOrcamento, definirPrevisto } from "@/api/orcamento";
+import { buscarMediasPorCategoria, criarOrcamento, definirPrevisto } from "@/api/orcamento";
 import { Modal } from "@/components/ui/Modal";
 import { CurrencyInput } from "@/components/ui/CurrencyInput";
 import { Button } from "@/components/ui/Button";
@@ -24,6 +24,11 @@ export function NovoOrcamentoModal({ open, ano, onClose, onCriado }: NovoOrcamen
     queryFn: listarGrupos,
     enabled: open,
   });
+  const { data: medias } = useQuery({
+    queryKey: ["orcamento", "medias"],
+    queryFn: buscarMediasPorCategoria,
+    enabled: open,
+  });
   const [gruposExpandidos, setGruposExpandidos] = useState<Record<string, boolean>>({});
   const [valores, setValores] = useState<Record<string, number>>({});
 
@@ -33,6 +38,34 @@ export function NovoOrcamentoModal({ open, ano, onClose, onCriado }: NovoOrcamen
       setValores({});
     }
   }, [open]);
+
+  useEffect(() => {
+    if (!open || !medias || !data) return;
+
+    const categoriasComMedia = new Set(medias.filter((m) => m.media > 0).map((m) => m.categoriaId));
+
+    setGruposExpandidos((atual) => {
+      const proximo = { ...atual };
+      for (const grupo of data.grupos) {
+        const temMedia =
+          grupo.categorias.some((c) => categoriasComMedia.has(c.id)) ||
+          grupo.subgrupos.some((s) => s.categorias.some((c) => categoriasComMedia.has(c.id)));
+        if (temMedia) proximo[grupo.id] = true;
+      }
+      if (data.semGrupo.some((c) => categoriasComMedia.has(c.id))) proximo[CHAVE_SEM_GRUPO] = true;
+      return proximo;
+    });
+
+    setValores((atual) => {
+      const proximo = { ...atual };
+      for (const m of medias) {
+        if (!(m.categoriaId in proximo) && m.media > 0) {
+          proximo[m.categoriaId] = Math.round(m.media * 100) / 100;
+        }
+      }
+      return proximo;
+    });
+  }, [open, medias, data]);
 
   function alternarGrupo(chave: string) {
     setGruposExpandidos((prev) => ({ ...prev, [chave]: !prev[chave] }));
@@ -85,7 +118,8 @@ export function NovoOrcamentoModal({ open, ano, onClose, onCriado }: NovoOrcamen
     >
       <fieldset disabled={mutation.isPending} className="space-y-4">
         <p className="text-sm text-muted-foreground">
-          Defina o valor previsto de cada categoria. Esse valor será aplicado a todos os meses de{" "}
+          Defina o valor previsto de cada categoria. Já pré-preenchemos com a média mensal dos
+          últimos 12 meses — ajuste como preferir. Esse valor será aplicado a todos os meses de{" "}
           {ano} e poderá ser ajustado mês a mês depois.
         </p>
 

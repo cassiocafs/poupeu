@@ -49,8 +49,17 @@ export type DefinirPrevistoInput =
   | { categoriaId: string; modo: "mesmoValorTodosMeses"; valor: number }
   | { categoriaId: string; modo: "porMes"; valoresPorMes: number[] };
 
+export interface MediaCategoria {
+  categoriaId: string;
+  media: number;
+}
+
 export function listarAnosOrcamento(): Promise<AnoOrcamento[]> {
   return apiFetch<AnoOrcamento[]>("/api/orcamento/anos");
+}
+
+export function buscarMediasPorCategoria(): Promise<MediaCategoria[]> {
+  return apiFetch<MediaCategoria[]>("/api/orcamento/medias");
 }
 
 export function criarOrcamento(ano: number): Promise<AnoOrcamento> {
