@@ -135,7 +135,7 @@ export function RelatoriosPage() {
 
           <section className="space-y-4">
             <h2 className="font-display text-lg font-bold text-foreground">Evolução por categoria</h2>
-            <div className="grid items-start gap-6 lg:grid-cols-2">
+            <div className="grid items-start gap-6">
               <Card className="p-5">
                 <LinhasCategoriaChart dados={data.despesasPorCategoriaPorMes} meses={data.meses} tipo="DESPESA" />
               </Card>

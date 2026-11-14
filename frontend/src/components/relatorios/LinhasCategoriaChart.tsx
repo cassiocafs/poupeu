@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   CartesianGrid,
   Legend,
@@ -24,7 +24,6 @@ interface LinhasCategoriaChartProps {
 }
 
 const LIMITE_LINHAS = 6;
-const TODAS = "todas";
 
 function formatarCompacta(valor: number) {
   return valor.toLocaleString("pt-BR", {
@@ -38,8 +37,26 @@ function formatarCompacta(valor: number) {
 export function LinhasCategoriaChart({ dados, meses, tipo }: LinhasCategoriaChartProps) {
   const formatarValor = useFormatarValor();
   const { hideValues } = usePreferences();
-  const [categoriaId, setCategoriaId] = useState<string>(TODAS);
+  const [categoriasSelecionadas, setCategoriasSelecionadas] = useState<string[]>([]);
+  const [filtroAberto, setFiltroAberto] = useState(false);
+  const filtroRef = useRef<HTMLDivElement>(null);
   const totalMeses = meses.length;
+
+  useEffect(() => {
+    if (!filtroAberto) return;
+    function aoClicarFora(e: MouseEvent) {
+      if (filtroRef.current && !filtroRef.current.contains(e.target as Node)) setFiltroAberto(false);
+    }
+    function aoPressionarTecla(e: KeyboardEvent) {
+      if (e.key === "Escape") setFiltroAberto(false);
+    }
+    document.addEventListener("mousedown", aoClicarFora);
+    document.addEventListener("keydown", aoPressionarTecla);
+    return () => {
+      document.removeEventListener("mousedown", aoClicarFora);
+      document.removeEventListener("keydown", aoPressionarTecla);
+    };
+  }, [filtroAberto]);
 
   const porGrupo = useMemo(() => agruparPorGrupo(dados, totalMeses), [dados, totalMeses]);
 
@@ -51,18 +68,26 @@ export function LinhasCategoriaChart({ dados, meses, tipo }: LinhasCategoriaChar
     [dados],
   );
 
+  function alternarCategoria(categoriaId: string) {
+    setCategoriasSelecionadas((atual) =>
+      atual.includes(categoriaId) ? atual.filter((id) => id !== categoriaId) : [...atual, categoriaId],
+    );
+  }
+
   const linhas = useMemo((): (SerieCategoria & { cor: string })[] => {
-    if (categoriaId !== TODAS) {
-      const item = dados.find((d) => (d.categoriaId ?? "sem-categoria") === categoriaId);
-      if (!item) return [];
-      return [
-        {
-          chave: categoriaId,
-          nome: item.categoriaNome,
-          porMes: item.porMes,
-          cor: categoryColor(item.categoriaId ?? categoriaId),
-        },
-      ];
+    if (categoriasSelecionadas.length > 0) {
+      return categoriasSelecionadas
+        .map((categoriaId) => {
+          const item = dados.find((d) => (d.categoriaId ?? "sem-categoria") === categoriaId);
+          if (!item) return null;
+          return {
+            chave: categoriaId,
+            nome: item.categoriaNome,
+            porMes: item.porMes,
+            cor: categoryColor(item.categoriaId ?? categoriaId),
+          };
+        })
+        .filter((l): l is SerieCategoria & { cor: string } => l !== null);
     }
 
     const ordenado = [...porGrupo].sort((a, b) => totalDaSerie(b.porMes) - totalDaSerie(a.porMes));
@@ -74,7 +99,7 @@ export function LinhasCategoriaChart({ dados, meses, tipo }: LinhasCategoriaChar
         : [];
 
     return [...principais.map((g) => ({ ...g, cor: categoryColor(g.chave) })), ...outros];
-  }, [categoriaId, dados, porGrupo, totalMeses]);
+  }, [categoriasSelecionadas, dados, porGrupo, totalMeses]);
 
   const semDados = linhas.every((l) => totalDaSerie(l.porMes) === 0);
 
@@ -91,27 +116,65 @@ export function LinhasCategoriaChart({ dados, meses, tipo }: LinhasCategoriaChar
   const titulo = tipo === "DESPESA" ? "Despesas por categoria, mês a mês" : "Receitas por categoria, mês a mês";
   const rotuloTodas = tipo === "DESPESA" ? "Todas as categorias" : "Todas as origens";
 
+  const rotuloBotao =
+    categoriasSelecionadas.length === 0
+      ? rotuloTodas
+      : categoriasSelecionadas.length === 1
+        ? opcoesCategorias.find((c) => (c.categoriaId ?? "sem-categoria") === categoriasSelecionadas[0])
+            ?.categoriaNome ?? rotuloTodas
+        : `${categoriasSelecionadas.length} categorias selecionadas`;
+
   return (
     <div>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h3 className="font-display text-sm font-semibold text-foreground">{titulo}</h3>
           <p className="mt-0.5 text-xs text-muted-foreground">
-            Evolução por categoria pai — escolha uma categoria específica para ver só ela
+            Evolução por categoria pai — escolha uma ou mais categorias para ver só elas
           </p>
         </div>
-        <select
-          value={categoriaId}
-          onChange={(e) => setCategoriaId(e.target.value)}
-          className="h-8 shrink-0 rounded-[11px] border border-border bg-muted px-2 text-[12px] text-foreground"
-        >
-          <option value={TODAS}>{rotuloTodas}</option>
-          {opcoesCategorias.map((c) => (
-            <option key={c.categoriaId ?? "sem-categoria"} value={c.categoriaId ?? "sem-categoria"}>
-              {c.categoriaNome}
-            </option>
-          ))}
-        </select>
+        <div ref={filtroRef} className="relative shrink-0">
+          <button
+            type="button"
+            onClick={() => setFiltroAberto((v) => !v)}
+            className="h-8 rounded-[11px] border border-border bg-muted px-2 text-[12px] text-foreground"
+          >
+            {rotuloBotao}
+          </button>
+          {filtroAberto && (
+            <div className="card-surface absolute right-0 z-20 mt-1 max-h-64 w-56 overflow-y-auto py-1 text-sm">
+              <button
+                type="button"
+                onClick={() => {
+                  setCategoriasSelecionadas([]);
+                  setFiltroAberto(false);
+                }}
+                className="block w-full px-3 py-1.5 text-left text-xs font-semibold text-primary hover:bg-muted"
+              >
+                {rotuloTodas}
+              </button>
+              <div className="my-1 border-t border-border" />
+              {opcoesCategorias.map((c) => {
+                const id = c.categoriaId ?? "sem-categoria";
+                const marcado = categoriasSelecionadas.includes(id);
+                return (
+                  <label
+                    key={id}
+                    className="flex items-center gap-2 px-3 py-1.5 text-[12px] text-foreground/90 hover:bg-muted"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={marcado}
+                      onChange={() => alternarCategoria(id)}
+                      className="size-3.5 accent-primary"
+                    />
+                    {c.categoriaNome}
+                  </label>
+                );
+              })}
+            </div>
+          )}
+        </div>
       </div>
 
       {dados.length === 0 || semDados ? (
