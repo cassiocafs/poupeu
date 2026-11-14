@@ -228,6 +228,7 @@ export function TransacaoFormInline({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["transacoes"] });
       queryClient.invalidateQueries({ queryKey: ["orcamento"] });
+      queryClient.invalidateQueries({ queryKey: ["contas"] });
       onSaved();
     },
   });
