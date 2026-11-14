@@ -37,6 +37,10 @@ export function AcoesLoteBar({
     mutationFn: () => excluirTransacoesLote(selectedIds),
     onSuccess: () => {
       const quantidade = selectedIds.length;
+      // Avisa o fim do carregamento antes de invalidarEFinalizar(), que zera
+      // selectedIds no componente pai e desmonta este componente — depois
+      // disso o efeito abaixo nunca chegaria a rodar com excluindo = false.
+      onExcluindoChange(false);
       invalidarEFinalizar();
       setConfirmandoExclusao(false);
       onExcluida(quantidade);
