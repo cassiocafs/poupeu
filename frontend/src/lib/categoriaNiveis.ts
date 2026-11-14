@@ -97,3 +97,15 @@ export function itensDoNivel(dados: ItemCategoriaResumo[], nivel: Nivel): ItemGr
       categoriaId: item.categoriaId,
     }));
 }
+
+/** Ids das categorias-folha dentro de um grupo/subgrupo, para abrir as transações de todas elas juntas. */
+export function categoriaIdsDoNivel(dados: ItemCategoriaResumo[], nivel: Nivel): string[] {
+  const filtro =
+    nivel.tipo === "grupo"
+      ? (d: ItemCategoriaResumo) => d.grupoId === nivel.id
+      : nivel.tipo === "subgrupo"
+        ? (d: ItemCategoriaResumo) => d.subgrupoId === nivel.id
+        : null;
+  if (!filtro) return [];
+  return [...new Set(dados.filter(filtro).map((d) => d.categoriaId).filter((id): id is string => !!id))];
+}

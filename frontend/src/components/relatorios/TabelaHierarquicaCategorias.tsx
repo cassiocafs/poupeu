@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { ChevronRight } from "lucide-react";
 import type { ItemCategoriaResumo } from "@/api/transacoes";
-import { itensDoNivel, type ItemGrafico } from "@/lib/categoriaNiveis";
+import { categoriaIdsDoNivel, itensDoNivel, type ItemGrafico } from "@/lib/categoriaNiveis";
 import { categoryColor } from "@/lib/categoryColor";
 import { useFormatarValor } from "@/hooks/use-formatar-valor";
 
@@ -40,11 +40,17 @@ function Linha({
   const aberto = expandidos.has(id);
   const pct = totalGeral > 0 ? (item.total / totalGeral) * 100 : 0;
   const podeExpandir = !item.folha && !!item.proximoNivel;
+  const grupoClicavel = podeExpandir && !!onSelecionarCategoria;
   const folhaClicavel = item.folha && !!onSelecionarCategoria;
+  const linhaClicavel = grupoClicavel || folhaClicavel;
 
-  function aoClicar() {
-    if (podeExpandir) alternar(id);
-    else if (folhaClicavel) onSelecionarCategoria!({ id: item.categoriaId ?? null, nome: item.nome });
+  function aoClicarLinha() {
+    if (grupoClicavel) {
+      const ids = categoriaIdsDoNivel(dados, item.proximoNivel!);
+      if (ids.length > 0) onSelecionarCategoria!({ id: ids.join(","), nome: item.nome });
+    } else if (folhaClicavel) {
+      onSelecionarCategoria!({ id: item.categoriaId ?? null, nome: item.nome });
+    }
   }
 
   const filhos =
@@ -54,23 +60,33 @@ function Linha({
   return (
     <>
       <div
-        role={podeExpandir || folhaClicavel ? "button" : undefined}
-        tabIndex={podeExpandir || folhaClicavel ? 0 : undefined}
-        onClick={aoClicar}
+        role={linhaClicavel ? "button" : undefined}
+        tabIndex={linhaClicavel ? 0 : undefined}
+        onClick={aoClicarLinha}
         onKeyDown={(e) => {
-          if ((e.key === "Enter" || e.key === " ") && (podeExpandir || folhaClicavel)) {
+          if ((e.key === "Enter" || e.key === " ") && linhaClicavel) {
             e.preventDefault();
-            aoClicar();
+            aoClicarLinha();
           }
         }}
         className={`flex items-center gap-2 border-b border-border py-2 pr-2 text-sm ${
-          podeExpandir || folhaClicavel ? "cursor-pointer hover:bg-muted" : ""
+          linhaClicavel ? "cursor-pointer hover:bg-muted" : ""
         } ${profundidade === 0 ? "font-semibold text-foreground" : "text-foreground/90"}`}
         style={{ paddingLeft: `${profundidade * 18 + 4}px` }}
       >
         <span className="flex w-4 shrink-0 justify-center text-muted-foreground">
           {podeExpandir ? (
-            <ChevronRight className={`size-3.5 transition-transform ${aberto ? "rotate-90" : ""}`} />
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                alternar(id);
+              }}
+              aria-label={aberto ? "Recolher" : "Expandir"}
+              className="flex items-center justify-center rounded hover:text-foreground"
+            >
+              <ChevronRight className={`size-3.5 transition-transform ${aberto ? "rotate-90" : ""}`} />
+            </button>
           ) : (
             <span
               className="inline-block size-[9px] rounded-full"
